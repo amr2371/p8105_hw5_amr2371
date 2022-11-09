@@ -31,8 +31,6 @@ scale_fill_discrete = scale_fill_viridis_d
 
 Describe the raw data. Create a city_state variable (e.g. “Baltimore, MD”) and then summarize within cities to obtain the total number of homicides and the number of unsolved homicides (those for which the disposition is “Closed without arrest” or “Open/No arrest”).
 
-
-
 ```{r}
 homicide_df <- 
   read_csv("homicide-data.csv", na = c("", "Unknown")) %>% 
@@ -42,8 +40,11 @@ homicide_df <-
            disposition == "Open/No arrest" ~ "unsolved",
            disposition == "Closed by arrest" ~ "solved"
          )) %>% 
-  relocate(uid, reported_date, city_state) %>% 
-  select(-c(city, state))
+  relocate(uid, reported_date, city_state)
+  
+  homicide_df %>% 
+    group_by(disposition,city) %>% 
+  count()
 ```
 The raw data set has 52,179 rows and 12 columns and include variables such as uid, reported date, victim lastname, victim firstname, victim race, victim age, victim sex, city and state.
 
@@ -54,15 +55,14 @@ For the city of Baltimore, MD, use the prop.test function to estimate the propor
 Focus on Baltimore, MD.
 
 ```{r}
-baltimore_df <- 
-  homicide_df %>% 
-  filter(city_state == "Baltimore, MD")
 baltimore_summary <- 
-  baltimore_df %>% 
+ homicide_df %>% 
+  filter(city_state == "Baltimore, MD") %>% 
   summarize(
     unsolved = sum(resolution == "unsolved"),
     n = n()
   )
+
 baltimore_test <- 
   prop.test(
     x = baltimore_summary$unsolved,
@@ -98,6 +98,8 @@ prop_test_function <-
     
     return(city_test)
   }
+
+prop_test_function(homicide_df)
 ```
 
 Iterate across all cities.
@@ -109,9 +111,9 @@ results_df <-
   mutate(
     test_results = map(data, prop_test_function),
     tidy_results = map(test_results, broom::tidy)
-  ) #%>% 
- # select(city_state, tidy_results) %>% 
- # unnest(tidy_results) %>% 
+  ) %>% 
+  select( tidy_results) %>% 
+  unnest(tidy_results) #%>% 
   #select(city_state, estimate, starts_with("conf"))
 ```
 
