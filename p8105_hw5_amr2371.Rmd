@@ -67,6 +67,7 @@ baltimore_test <-
   prop.test(
     x = baltimore_summary$unsolved,
     n = baltimore_summary$n) 
+
 baltimore_test %>% 
   broom::tidy() %>% 
   select(estimate, starts_with("conf"))
@@ -78,9 +79,7 @@ Now run prop.test for each of the cities in your dataset, and extract both the p
 Create a plot that shows the estimates and CIs for each city – check out geom_errorbar for a way to add error bars based on the upper and lower limits. Organize cities according to the proportion of unsolved homicides.
 
 
-
 Write a function.
-
 ```{r}
 prop_test_function <- 
   function(city_df) {
@@ -98,8 +97,6 @@ prop_test_function <-
     
     return(city_test)
   }
-
-prop_test_function(homicide_df)
 ```
 
 Iterate across all cities.
@@ -113,8 +110,8 @@ results_df <-
     tidy_results = map(test_results, broom::tidy)
   ) %>% 
   select( tidy_results) %>% 
-  unnest(tidy_results) #%>% 
-  #select(city_state, estimate, starts_with("conf"))
+  unnest(tidy_results) %>% 
+  select( estimate, starts_with("conf"))
 ```
 
 Make a plot showing the estimates and confidence intervals.
@@ -127,3 +124,98 @@ Make a plot showing the estimates and confidence intervals.
 #  geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) +
 #  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
+
+
+### Problem 3
+When designing an experiment or analysis, a common question is whether it is likely that a true effect will be detected – put differently, whether a false null hypothesis will be rejected. The probability that a false null hypothesis is rejected is referred to as power, and it depends on several factors, including: the sample size; the effect size; and the error variance. In this problem, you will conduct a simulation to explore power in a one-sample t-test.
+
+First set the following design elements:
+
+Fix n=30
+Fix σ=5
+Set μ=0
+. Generate 5000 datasets from the model
+```{r}
+set.seed(0)
+
+t_test_clean <- function(df) {
+ out_df <- t.test(df,
+         alternative = c("two.sided"),
+         mu = 0,
+         conf.level = 0.95) %>% 
+    broom::tidy()
+ return(out_df)
+}
+#n_iter <-  50
+#mu <- 0
+
+generate_results <- function(mu = 0, 
+                             sigma=5,
+                             n_iter=50,
+                             n_obs =30){
+
+new_list <- list()
+
+
+for (i in 1:n_iter) {
+  temp_vec <- rnorm( n = n_obs, mean = mu, sd = sigma)
+  new_list[[i]] <-temp_vec
+}
+
+stat_tib<-
+  tibble(
+  data = new_list
+) %>% 
+  mutate(
+    t_test_res = map(.x = data, ~t_test_clean(.x))
+  ) %>% 
+  unnest(t_test_res) %>% 
+ janitor::clean_names() %>% 
+  select(estimate,p_value)
+
+fin_tib <- stat_tib %>% 
+  mutate(
+    rej = p_value < 0.05
+  ) %>% 
+  summarise(
+    total = n(),
+    total_rej = sum(rej),
+    prop_rej = total_rej/total,
+    avg_mu_hat = mean(estimate)
+    )
+return(fin_tib)
+}
+
+mu_tib <-
+  tibble(
+    mu = c(0, 1, 2, 3, 4, 5, 6)
+  ) %>% 
+  mutate(
+    results = map(.x = mu, ~generate_results(mu = .x))
+  ) %>% 
+  unnest(results)
+```
+
+
+
+x∼Normal[μ,σ]
+
+For each dataset, save μ̂
+ and the p-value arising from a test of H:μ=0
+ using α=0.05
+. Hint: to obtain the estimate and p-value, use broom::tidy to clean the output of t.test.
+
+Repeat the above for μ={1,2,3,4,5,6}
+, and complete the following:
+
+Make a plot showing the proportion of times the null was rejected (the power of the test) on the y axis and the true value of μ
+ on the x axis. Describe the association between effect size and power.
+Make a plot showing the average estimate of μ̂
+ on the y axis and the true value of μ
+ on the x axis. Make a second plot (or overlay on the first) the average estimate of μ̂
+ only in samples for which the null was rejected on the y axis and the true value of μ
+ on the x axis. Is the sample average of μ̂
+ across tests for which the null is rejected approximately equal to the true value of μ
+? Why or why not?
+
+Power is increaisng as true mean increases
