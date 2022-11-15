@@ -150,7 +150,7 @@ results_df =
   select(city_state, tidy_results) %>%
   unnest(tidy_results) %>%
   select(city_state, estimate, starts_with("conf"))
-results_df
+results_df %>% knitr::kable()
 ```
 
 
