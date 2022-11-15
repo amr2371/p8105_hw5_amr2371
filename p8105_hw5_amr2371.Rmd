@@ -236,9 +236,7 @@ mu_tib <-
 
 
 
-Make a plot showing the proportion of times the null was rejected (the power of the test) on the y axis and the true value of μ
- on the x axis. Describe the association between effect size and power.
- 
+A plot showing the proportion of times the null was rejected (the power of the test) on the y axis and the true value of μ on the x axis
 ```{r}
 mu_tib %>% 
   ggplot(aes(x = mu, y = prop_rej))+
@@ -247,11 +245,11 @@ mu_tib %>%
   ylab("Power")
 ```
  
-Make a plot showing the average estimate of μ̂
- on the y axis and the true value of μ
- on the x axis. Make a second plot (or overlay on the first) the average estimate of μ̂
- only in samples for which the null was rejected on the y axis and the true value of μ
- on the x axis. 
+From the graph above we can see that the relationship between power and the true mean is sigmoidal.Power is increasing as true mean increases
+
+
+
+A plot showing the average estimage of mu-hat on the y axis and the true value of mu-jat on the axis as well as a second plot of the average estime of muhat in samples where the null was rejected on the y axis and the true value of mu on the x axis.
 ```{r}
 p <- mu_tib %>% 
   ggplot(aes(x = mu, y = avg_mu_hat))+
@@ -268,9 +266,4 @@ q <- mu_tib %>%
   p + q
 ```
  
- 
- Is the sample average of μ̂
- across tests for which the null is rejected approximately equal to the true value of μ
-? Why or why not?
-
-Power is increaisng as true mean increases
+The sample average of mu-hat is approximately equal to the true value of mu since the dataset was created based on the true value of mu.
